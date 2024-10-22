@@ -1,8 +1,10 @@
-# CLO Comparison Tool
+# TRACE:
+
+## Total Recognition And Course Evaluation
 
 ## Project Overview
 
-The **CLO Comparison Tool** is a Python-based desktop application that helps users compare Course Learning Outcomes (CLOs) from different Excel files. The tool uses advanced text similarity algorithms (semantic similarity and Jaccard index) to analyze and compare CLOs between existing and new course files, providing users with a clear comparison of CLO changes. This application is designed to handle large batches of CLOs efficiently using multithreading, making it ideal for institutions or organizations managing curriculum updates.
+The **TRACE** is a Python-based desktop application that helps users compare Course Learning Outcomes (CLOs) from different Excel files. The tool uses advanced text similarity algorithms (semantic similarity and Jaccard index) to analyze and compare CLOs between existing and new course files, providing users with a clear comparison of CLO changes. This application is designed to handle large batches of CLOs efficiently using multithreading, making it ideal for institutions or organizations managing curriculum updates.
 
 ---
 

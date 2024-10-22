@@ -1,4 +1,9 @@
-from PyQt5.QtWidgets import QMainWindow, QVBoxLayout, QGroupBox, QFormLayout, QLineEdit, QPushButton, QLabel, QProgressBar, QHBoxLayout, QTabWidget, QTextEdit, QWidget, QSpacerItem, QSizePolicy
+from PyQt5.QtWidgets import (
+    QMainWindow, QVBoxLayout, QGroupBox, QFormLayout,
+    QLineEdit, QPushButton, QLabel, QProgressBar,
+    QHBoxLayout, QTabWidget, QTextEdit, QWidget,
+    QSpacerItem, QSizePolicy
+)
 from PyQt5.QtCore import Qt
 from app.services.batch_processor import CLOComparisonThread
 from app.utils.file_utils import select_file
@@ -14,24 +19,38 @@ class CLOComparisonApp(QMainWindow):
 
         main_layout = QVBoxLayout()
 
+        # File selection group
         file_selection_group = QGroupBox("Step 1: Select Files")
-        file_layout = QFormLayout()
+        file_layout = QHBoxLayout()  # Use a horizontal layout for side by side
 
+        # Existing file selection
         self.entry_existing = QLineEdit(self)
         self.button_existing = QPushButton("Browse", self)
         self.button_existing.clicked.connect(lambda: select_file(self, 'existing', self.entry_existing))
+        
+        existing_layout = QVBoxLayout()  # Vertical layout for existing file
+        existing_layout.addWidget(QLabel("Existing Excel File:"))
+        existing_layout.addWidget(self.entry_existing)
+        existing_layout.addWidget(self.button_existing)
 
+        # New file selection
         self.entry_new = QLineEdit(self)
         self.button_new = QPushButton("Browse", self)
         self.button_new.clicked.connect(lambda: select_file(self, 'new', self.entry_new))
+        
+        new_layout = QVBoxLayout()  # Vertical layout for new file
+        new_layout.addWidget(QLabel("New Excel File:"))
+        new_layout.addWidget(self.entry_new)
+        new_layout.addWidget(self.button_new)
 
-        file_layout.addRow(QLabel("Existing Excel File:"), self.entry_existing)
-        file_layout.addRow("", self.button_existing)
-        file_layout.addRow(QLabel("New Excel File:"), self.entry_new)
-        file_layout.addRow("", self.button_new)
+        # Add both vertical layouts to the horizontal layout
+        file_layout.addLayout(existing_layout)
+        file_layout.addLayout(new_layout)
+        
         file_selection_group.setLayout(file_layout)
         main_layout.addWidget(file_selection_group)
 
+        # Action layout
         action_layout = QHBoxLayout()
         self.button_compare = QPushButton('Compare CLOs', self)
         self.button_compare.clicked.connect(self.compare_clos)
@@ -41,6 +60,7 @@ class CLOComparisonApp(QMainWindow):
         action_layout.addWidget(self.progressbar)
         main_layout.addLayout(action_layout)
 
+        # Tabs for results
         self.tabs = QTabWidget()
         self.result_tab = QTextEdit()
         self.match_tab = QTextEdit()
@@ -51,9 +71,11 @@ class CLOComparisonApp(QMainWindow):
         self.tabs.addTab(self.no_match_tab, "No Match Courses")
         main_layout.addWidget(self.tabs)
 
+        # Spacer
         spacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
         main_layout.addSpacerItem(spacer)
 
+        # Main container
         container = QWidget()
         container.setLayout(main_layout)
         self.setCentralWidget(container)
