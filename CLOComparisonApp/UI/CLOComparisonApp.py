@@ -1,14 +1,12 @@
-from PyQt5.QtWidgets import QMainWindow, QVBoxLayout, QWidget, QTabWidget
-from UI.tabs.FileTab import FileTab
+from PyQt5.QtWidgets import QMainWindow, QVBoxLayout, QWidget
 from UI.tabs.SettingsTab import SettingsTab
-from UI.tabs.HelpTab import HelpTab
-from UI.tabs.AboutTab import AboutTab
 from .ResultTabsWidget import ResultTabsWidget
 from .ActionBarWidget import ActionBarWidget
 from threads import CLOComparisonThread
 import pandas as pd
 from utils import extract_clos
 import re
+
 
 class CLOComparisonApp(QMainWindow):
     def __init__(self):
@@ -17,34 +15,22 @@ class CLOComparisonApp(QMainWindow):
 
     def init_ui(self):
         self.setWindowTitle("TRACE")
-        self.setGeometry(100, 100, 900, 700)
+        self.setGeometry(100, 100, 1000, 700)
 
-        # Create the tab widget
-        self.tab_widget = QTabWidget()
-
-        # Initialize each tab
-        self.tab_file = FileTab(self)
-        self.tab_settings = SettingsTab(self)
-        self.tab_help = HelpTab(self)
-        self.tab_about = AboutTab(self)
-
-        # Add the tabs to the tab widget
-        self.tab_widget.addTab(self.tab_file, "File")
-        self.tab_widget.addTab(self.tab_settings, "Settings")
-        self.tab_widget.addTab(self.tab_help, "Help")
-        self.tab_widget.addTab(self.tab_about, "About")
+        # Initialize the Settings tab
+        self.settings_tab = SettingsTab(self)
 
         # Create Action Bar Widget
         self.action_bar_widget = ActionBarWidget(self)
 
-        # Main layout setup
-        main_layout = QVBoxLayout()
-        main_layout.addWidget(self.tab_widget)
-        main_layout.addWidget(self.action_bar_widget)
-
         # Result Tabs Widget
         self.result_tabs_widget = ResultTabsWidget(self)
-        main_layout.addWidget(self.result_tabs_widget)
+
+        # Main layout setup
+        main_layout = QVBoxLayout()
+        main_layout.addWidget(self.settings_tab)  # Add the settings tab directly
+        main_layout.addWidget(self.action_bar_widget)  # Add action bar widget
+        main_layout.addWidget(self.result_tabs_widget)  # Add results display widget
 
         # Set up the main container
         container = QWidget()
@@ -53,20 +39,13 @@ class CLOComparisonApp(QMainWindow):
 
         # Connections
         self.action_bar_widget.button_compare.clicked.connect(self.compare_clos)
-        # Assuming FileSelectionWidget in SettingsTab sends update_files_signal
-        self.tab_settings.file_selection_widget.update_files_signal.connect(
+        self.settings_tab.file_selection_widget.update_files_signal.connect(
             self.action_bar_widget.update_file_paths
         )
 
-    def close_help(self):
-        self.tab_widget.setCurrentIndex(0)  # Return to the first tab (File tab) or adjust as needed
-
-    def close_about(self):
-        self.tab_widget.setCurrentIndex(0)  # Return to the first tab (File tab) or adjust as needed
-
     def compare_clos(self):
-        file_path_existing = self.tab_settings.file_selection_widget.entry_existing.text()
-        file_path_new = self.tab_settings.file_selection_widget.entry_new.text()
+        file_path_existing = self.settings_tab.file_selection_widget.entry_existing.text()
+        file_path_new = self.settings_tab.file_selection_widget.entry_new.text()
         
         if not file_path_existing or not file_path_new:
             self.result_tabs_widget.result_tab.setPlainText("Please select both files.")
@@ -95,8 +74,10 @@ class CLOComparisonApp(QMainWindow):
             for i in range(0, len(existing_clo_dict), batch_size)
         ]
 
-        threshold = self.tab_settings.threshold_widget.threshold_slider.value() / 100
-        self.avg_similarity_threshold = self.tab_settings.threshold_widget.avg_similarity_slider.value() / 100
+        threshold = self.settings_tab.threshold_widget.threshold_slider.value() / 100
+        self.avg_similarity_threshold = (
+            self.settings_tab.threshold_widget.avg_similarity_slider.value() / 100
+        )
 
         self.thread = CLOComparisonThread(
             existing_clo_dict, new_clo_list, batches, threshold
@@ -109,6 +90,23 @@ class CLOComparisonApp(QMainWindow):
         self.action_bar_widget.progressbar.setValue(value)
 
     def display_results(self, results):
-        threshold = self.tab_settings.threshold_widget.threshold_slider.value() / 100
-        avg_threshold = self.tab_settings.threshold_widget.avg_similarity_slider.value() / 100
+        # Extract thresholds
+        threshold = self.settings_tab.threshold_widget.threshold_slider.value() / 100
+        avg_threshold = (
+            self.settings_tab.threshold_widget.avg_similarity_slider.value() / 100
+        )
+
+        # Prepare data for the table
+        results_for_table = []
+
+        for sheet_name, average_similarity, highest_similarity_pairs in results:
+            results_for_table.append((sheet_name, average_similarity))
+
+        # Update the ResultTabsWidget
         self.result_tabs_widget.display_results(results, threshold, avg_threshold)
+
+        # Update the right-side results in the SettingsTab (tabular format)
+        self.settings_tab.update_results(results_for_table)
+
+
+
