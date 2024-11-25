@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QTabWidget, QTableWidget, QTableWidgetItem, QVBoxLayout, QGroupBox, QPushButton, QFileDialog
+from PyQt5.QtWidgets import QTabWidget, QTableWidget, QTableWidgetItem, QVBoxLayout, QGroupBox, QPushButton, QFileDialog, QDialog, QRadioButton, QDialogButtonBox
 import pandas as pd
 
 class ResultTabsWidget(QGroupBox):
@@ -20,27 +20,18 @@ class ResultTabsWidget(QGroupBox):
         self.tabs.addTab(self.match_tab, "Matching Courses")
         self.tabs.addTab(self.no_match_tab, "No Match Courses")
         
-        # Download Buttons
-        self.download_all_button = QPushButton("Download All Results")
-        self.download_overall_button = QPushButton("Download Overall Results")
-        self.download_matching_button = QPushButton("Download Matching Courses")
-        self.download_no_match_button = QPushButton("Download No Match Courses")
-        
-        self.download_all_button.clicked.connect(self.download_all_results)
-        self.download_overall_button.clicked.connect(self.download_overall_results)
-        self.download_matching_button.clicked.connect(self.download_matching_courses)
-        self.download_no_match_button.clicked.connect(self.download_no_match_courses)
+        # Download Button
+        self.download_button = QPushButton("Download Results")
+        self.download_button.clicked.connect(self.show_download_dialog)
 
         layout.addWidget(self.tabs)
-        layout.addWidget(self.download_all_button)
-        layout.addWidget(self.download_overall_button)
-        layout.addWidget(self.download_matching_button)
-        layout.addWidget(self.download_no_match_button)
+        layout.addWidget(self.download_button)
 
         self.setLayout(layout)
 
     def display_results(self, results, similarity_threshold, avg_similarity_threshold):
-        # Set column headers for the table
+        """Populate the tables with results."""
+        # Set column headers for the tables
         self.result_tab.setColumnCount(2)
         self.result_tab.setHorizontalHeaderLabels(["Course Name", "Average Similarity"])
 
@@ -50,7 +41,7 @@ class ResultTabsWidget(QGroupBox):
         self.no_match_tab.setColumnCount(1)
         self.no_match_tab.setHorizontalHeaderLabels(["Course Name"])
 
-        # Prepare rows
+        # Prepare rows for each table
         self.result_tab.setRowCount(len(results))
         self.match_tab.setRowCount(0)  # We'll add rows dynamically
         self.no_match_tab.setRowCount(0)
@@ -81,8 +72,21 @@ class ResultTabsWidget(QGroupBox):
         self.match_tab.resizeColumnsToContents()
         self.no_match_tab.resizeColumnsToContents()
 
+    def show_download_dialog(self):
+        """Open a dialog to choose which data to download."""
+        dialog = DownloadChoiceDialog(self)
+        if dialog.exec_() == QDialog.Accepted:
+            # Get selected choice and trigger download
+            download_choice = dialog.get_download_choice()
+            if download_choice == 'overall':
+                self.download_table(self.result_tab)
+            elif download_choice == 'matching':
+                self.download_table(self.match_tab)
+            elif download_choice == 'no_match':
+                self.download_table(self.no_match_tab)
+
     def download_table(self, table_widget):
-        # Get the number of rows and columns in the table
+        """Download the selected table as a CSV or Excel file."""
         rows = table_widget.rowCount()
         columns = table_widget.columnCount()
 
@@ -108,50 +112,40 @@ class ResultTabsWidget(QGroupBox):
                 df = pd.DataFrame(data)
                 df.to_excel(file_name, index=False, header=False)
 
-    def download_all_results(self):
-        # Combine all tables into one and export
-        all_data = []
 
-        # Collect Overall Results
-        rows = self.result_tab.rowCount()
-        for row in range(rows):
-            sheet_name = self.result_tab.item(row, 0).text()
-            avg_similarity = self.result_tab.item(row, 1).text()
-            all_data.append([sheet_name, avg_similarity])
+class DownloadChoiceDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
 
-        # Collect Matching Courses
-        rows = self.match_tab.rowCount()
-        for row in range(rows):
-            sheet_name = self.match_tab.item(row, 0).text()
-            existing_clo = self.match_tab.item(row, 1).text()
-            new_clo = self.match_tab.item(row, 2).text()
-            similarity_score = self.match_tab.item(row, 3).text()
-            all_data.append([sheet_name, existing_clo, new_clo, similarity_score])
+        self.setWindowTitle("Select Data to Download")
+        layout = QVBoxLayout()
 
-        # Collect No Match Courses
-        rows = self.no_match_tab.rowCount()
-        for row in range(rows):
-            sheet_name = self.no_match_tab.item(row, 0).text()
-            all_data.append([sheet_name])
+        # Radio buttons for different download options
+        self.overall_button = QRadioButton("Overall Results")
+        self.matching_button = QRadioButton("Matching Courses")
+        self.no_match_button = QRadioButton("No Match Courses")
 
-        # Open file dialog to save combined results
-        options = QFileDialog.Options()
-        file_name, _ = QFileDialog.getSaveFileName(self, "Save Combined Results", "", "CSV Files (*.csv);;Excel Files (*.xlsx)", options=options)
+        # Set default selection
+        self.overall_button.setChecked(True)
 
-        if file_name:
-            # Save as CSV or Excel based on file extension
-            if file_name.endswith(".csv"):
-                df = pd.DataFrame(all_data)
-                df.to_csv(file_name, index=False, header=False)
-            elif file_name.endswith(".xlsx"):
-                df = pd.DataFrame(all_data)
-                df.to_excel(file_name, index=False, header=False)
+        layout.addWidget(self.overall_button)
+        layout.addWidget(self.matching_button)
+        layout.addWidget(self.no_match_button)
 
-    def download_overall_results(self):
-        self.download_table(self.result_tab)
+        # Buttons
+        self.button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        self.button_box.accepted.connect(self.accept)
+        self.button_box.rejected.connect(self.reject)
 
-    def download_matching_courses(self):
-        self.download_table(self.match_tab)
+        layout.addWidget(self.button_box)
 
-    def download_no_match_courses(self):
-        self.download_table(self.no_match_tab)
+        self.setLayout(layout)
+
+    def get_download_choice(self):
+        """Return the selected download option."""
+        if self.overall_button.isChecked():
+            return 'overall'
+        elif self.matching_button.isChecked():
+            return 'matching'
+        elif self.no_match_button.isChecked():
+            return 'no_match'
