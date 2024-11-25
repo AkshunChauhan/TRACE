@@ -17,8 +17,8 @@ class ResultTabsWidget(QGroupBox):
 
         # Add tabs
         self.tabs.addTab(self.result_tab, "Overall Results")
-        self.tabs.addTab(self.match_tab, "Matching Courses")
-        self.tabs.addTab(self.no_match_tab, "No Match Courses")
+        self.tabs.addTab(self.match_tab, "Matched Courses details")
+        self.tabs.addTab(self.no_match_tab, "Not Matched Courses")
         
         # Download Button
         self.download_button = QPushButton("Download Results")

@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QMainWindow, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QMainWindow, QVBoxLayout, QWidget, QMessageBox
 from UI.tabs.SettingsTab import SettingsTab
 from .ResultTabsWidget import ResultTabsWidget
 from .ActionBarWidget import ActionBarWidget
@@ -6,6 +6,7 @@ from threads import CLOComparisonThread
 import pandas as pd
 from utils import extract_clos
 import re
+import os
 
 
 class CLOComparisonApp(QMainWindow):
@@ -44,18 +45,39 @@ class CLOComparisonApp(QMainWindow):
         )
 
     def compare_clos(self):
+        # Get file paths from the UI
         file_path_existing = self.settings_tab.file_selection_widget.entry_existing.text()
         file_path_new = self.settings_tab.file_selection_widget.entry_new.text()
-        
+
+        # Validate if both file paths are provided
         if not file_path_existing or not file_path_new:
-            self.result_tabs_widget.result_tab.setPlainText("Please select both files.")
+            self.action_bar_widget.show_error_message("File Missing", "Please ensure both file paths are provided.")
             return
 
-        existing_clo_dict = {}
-        excel_file_existing = pd.read_excel(file_path_existing, sheet_name=None)
-        new_clo_data = pd.read_excel(file_path_new)
-        course_pattern = r"^[A-Z]{4,5}\s?\d{4}.*|^[A-Z]{3}\s?\d{4}.*"
+        # Validate file existence
+        if not os.path.exists(file_path_existing) or not os.path.exists(file_path_new):
+            self.action_bar_widget.show_error_message("File Not Found", "One or both of the selected files do not exist.")
+            return
 
+        try:
+            # Attempt to read the existing file
+            excel_file_existing = pd.read_excel(file_path_existing, sheet_name=None)
+        except Exception as e:
+            # Handle errors while reading the existing file
+            self.action_bar_widget.show_error_message("File Read Error", f"Could not read the existing file: {str(e)}")
+            return
+
+        try:
+            # Attempt to read the new file
+            new_clo_data = pd.read_excel(file_path_new)
+        except Exception as e:
+            # Handle errors while reading the new file
+            self.action_bar_widget.show_error_message("File Read Error", f"Could not read the new file: {str(e)}")
+            return
+
+        # Check for CLO extraction in the existing file
+        existing_clo_dict = {}
+        course_pattern = r"^[A-Z]{4,5}\s?\d{4}.*|^[A-Z]{3}\s?\d{4}.*"
         for sheet_name, sheet_data in excel_file_existing.items():
             if re.match(course_pattern, sheet_name):
                 if len(sheet_data) >= 13:
@@ -67,46 +89,62 @@ class CLOComparisonApp(QMainWindow):
                     ):
                         existing_clo_dict[sheet_name] = extract_clos(sheet_data)
 
+        # If no CLOs were extracted from the existing file, show an error message
+        if not existing_clo_dict:
+            self.action_bar_widget.show_error_message("CLO Extraction Error", "No CLOs were found in the existing file.")
+            return
+
+        # Extract CLOs from the new file
         new_clo_list = extract_clos(new_clo_data)
+        if not new_clo_list:  # If no CLOs were found in the new file, show an error message
+            self.action_bar_widget.show_error_message("CLO Extraction Error", "No CLOs were found in the new file.")
+            return
+
+        # Split existing CLOs into batches for processing
         batch_size = 5
         batches = [
             list(existing_clo_dict.items())[i: i + batch_size]
             for i in range(0, len(existing_clo_dict), batch_size)
         ]
 
+        # Retrieve threshold values
         threshold = self.settings_tab.threshold_widget.threshold_slider.value() / 100
-        self.avg_similarity_threshold = (
+        avg_similarity_threshold = (
             self.settings_tab.threshold_widget.avg_similarity_slider.value() / 100
         )
 
-        self.thread = CLOComparisonThread(
-            existing_clo_dict, new_clo_list, batches, threshold
-        )
-        self.thread.update_progress.connect(self.update_progress)
-        self.thread.comparison_done.connect(self.display_results)
-        self.thread.start()
+        try:
+            # Start the comparison in a separate thread
+            self.thread = CLOComparisonThread(
+                existing_clo_dict, new_clo_list, batches, threshold
+            )
+            self.thread.update_progress.connect(self.update_progress)
+            self.thread.comparison_done.connect(self.display_results)
+            self.thread.start()
+
+        except Exception as e:
+            # Handle any errors that occur during the comparison process
+            self.action_bar_widget.show_error_message("Comparison Error", f"An error occurred during the CLO comparison: {str(e)}")
 
     def update_progress(self, value):
+        """Update progress bar."""
         self.action_bar_widget.progressbar.setValue(value)
 
     def display_results(self, results):
-        # Extract thresholds
+        """Display results in the ResultTabsWidget."""
+        # Retrieve threshold values for similarity
         threshold = self.settings_tab.threshold_widget.threshold_slider.value() / 100
         avg_threshold = (
             self.settings_tab.threshold_widget.avg_similarity_slider.value() / 100
         )
 
-        # Prepare data for the table
+        # Prepare data for displaying in the table
         results_for_table = []
-
         for sheet_name, average_similarity, highest_similarity_pairs in results:
             results_for_table.append((sheet_name, average_similarity))
 
-        # Update the ResultTabsWidget
+        # Update the ResultTabsWidget with the comparison results
         self.result_tabs_widget.display_results(results, threshold, avg_threshold)
 
-        # Update the right-side results in the SettingsTab (tabular format)
+        # Update results in the SettingsTab (tabular format)
         self.settings_tab.update_results(results_for_table)
-
-
-
