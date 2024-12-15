@@ -11,7 +11,7 @@ class ThresholdWidget(QGroupBox):
         layout = QHBoxLayout()
 
         # Similarity Threshold Slider
-        self.threshold_label = QLabel("Similarity Threshold: 0.5", self)
+        self.threshold_label = QLabel("Similarity Threshold: 50%", self)
         self.threshold_slider = QSlider(Qt.Horizontal)
         self.threshold_slider.setRange(0, 100)
         self.threshold_slider.setValue(50)
@@ -22,7 +22,7 @@ class ThresholdWidget(QGroupBox):
         similarity_layout.addWidget(self.threshold_slider)
 
         # Average Similarity Threshold Slider
-        self.avg_similarity_label = QLabel("Average Similarity Threshold: 0.5", self)
+        self.avg_similarity_label = QLabel("Average Similarity Threshold: 50%", self)
         self.avg_similarity_slider = QSlider(Qt.Horizontal)
         self.avg_similarity_slider.setRange(0, 100)
         self.avg_similarity_slider.setValue(50)
@@ -38,9 +38,9 @@ class ThresholdWidget(QGroupBox):
         self.setLayout(layout)
 
     def update_threshold_label(self):
-        threshold_value = self.threshold_slider.value() / 100
-        self.threshold_label.setText(f"Similarity Threshold: {threshold_value:.2f}")
+        threshold_value = self.threshold_slider.value() 
+        self.threshold_label.setText(f"Similarity Threshold: {threshold_value}%")
 
     def update_avg_similarity_label(self):
-        avg_similarity_value = self.avg_similarity_slider.value() / 100
-        self.avg_similarity_label.setText(f"Average Similarity Threshold: {avg_similarity_value:.2f}")
+        avg_similarity_value = self.avg_similarity_slider.value()
+        self.avg_similarity_label.setText(f"Average Similarity Threshold: {avg_similarity_value}%")
