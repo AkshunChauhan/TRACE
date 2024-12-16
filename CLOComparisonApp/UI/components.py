@@ -39,7 +39,7 @@ def create_file_selection_group(parent):
 
 
 def create_threshold_group(parent):
-    threshold_group = QGroupBox("Step 2 & 3: Set Similarity Thresholds")
+    threshold_group = QGroupBox("Step 2: Set Similarity Thresholds")
     threshold_layout = QHBoxLayout()
 
     # Similarity Threshold Slider
