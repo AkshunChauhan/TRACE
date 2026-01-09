@@ -1,47 +1,40 @@
-# TRACE:
-
-## Total Recognition And Course Evaluation
+# TRACE: Total Recognition And Course Evaluation
 
 ## Project Overview
 
-The **TRACE** is a Python-based desktop application that helps users compare Course Learning Outcomes (CLOs) from different Excel files. The tool uses advanced text similarity algorithms (semantic similarity and Jaccard index) to analyze and compare CLOs between existing and new course files, providing users with a clear comparison of CLO changes. This application is designed to handle large batches of CLOs efficiently using multithreading, making it ideal for institutions or organizations managing curriculum updates.
+**TRACE** is a Python-based desktop application designed to help users compare Course Learning Outcomes (CLOs) from different Excel files. The tool leverages advanced natural language processing (NLP) using the `all-MiniLM-L6-v2` Sentence Transformer model to calculate semantic similarity between CLOs. This allows for a deep understanding of curriculum changes beyond simple keyword matching. 
+
+The application is built with a PyQt5 graphical user interface and utilizes multithreading to handle large batches of CLO comparisons efficiently.
 
 ---
 
 ## Key Features
 
-- **Excel File Comparison**: Compare CLOs from two Excel files.
-- **Batch Processing**: Process large batches of CLOs in parallel using multithreading.
-- **Similarity Calculation**: Uses multiple algorithms like semantic similarity and Jaccard index to compare CLOs.
-- **User-Friendly Interface**: A clean and intuitive PyQt-based graphical user interface (GUI).
-- **Scalable Architecture**: The codebase is organized with modular components for easy expansion.
-- **Logging**: Integrated logging to track events, errors, and performance.
+- **Semantic Similarity Analysis**: Uses the `all-MiniLM-L6-v2` transformer model to compare CLOs based on meaning.
+- **Excel File Comparison**: Seamlessly compare CLOs from old and new course Excel files.
+- **Interactive UI**: A modern PyQt5-based interface for easy file selection and results visualization.
+- **Multithreaded Processing**: Process large datasets without freezing the UI.
+- **Dynamic Thresholding**: Adjust similarity thresholds directly within the app to refine comparison results.
+- **Exportable Results**: Download and save comparison reports.
 
 ---
 
 ## Project Structure
 
 ```
-CLO-Comparison-App/
-│
-├── app/
-│   ├── __init__.py            # Initialize the app module
+TRACE/
+├── CLOComparisonApp/
+│   ├── UI/                    # PyQt UI component definitions
+│   ├── icons/                 # Application icons and assets
+│   ├── tests/                 # Unit tests for core logic
 │   ├── main.py                # Main entry point for the application
-│   ├── ui/
-│   │   ├── __init__.py        # Initialize UI module
-│   │   ├── main_window.py     # Main window UI setup
-│   ├── data/
-│   │   ├── clo_extractor.py   # Functions to extract and process CLO data
-│   │   ├── similarity.py      # Functions to calculate similarity (semantic and Jaccard)
-│   ├── utils/
-│   │   ├── batch_processor.py # Functions to process CLOs in batches using threading
-│   │   ├── logging_config.py  # Logging configuration and setup
-├── tests/
-│   ├── test_similarity.py     # Unit tests for similarity calculations
-│   ├── test_clo_extractor.py  # Unit tests for CLO extraction
-├── requirements.txt           # Project dependencies
-├── Dockerfile                 # Docker configuration for containerized deployment
-└── README.md                  # Instructions and project overview
+│   ├── models.py              # Sentence Transformer model initialization
+│   ├── threads.py             # Multithreading logic for comparisons
+│   ├── ui_components.py        # Custom UI widgets and layouts
+│   └── utils.py               # Data extraction and utility functions
+├── LICENSE                    # MIT License
+├── README.md                  # Project documentation
+└── requirements.txt           # Python dependencies
 ```
 
 ---
@@ -51,63 +44,57 @@ CLO-Comparison-App/
 1. **Clone the repository**:
 
    ```bash
-   git clone https://github.com/AkshunChauhan/CLO-Comparison-Tool.git
-   cd CLO-Comparison-App
+   git clone https://github.com/AkshunChauhan/TRACE.git
+   cd TRACE
    ```
 
-2. **Set up a virtual environment (optional but recommended)**:
+2. **Set up a virtual environment (recommended)**:
 
    ```bash
-   python3 -m venv venv
-   source venv/bin/activate   # On Windows use `venv\Scripts\activate`
+   python -m venv venv
+   # On Windows:
+   .\venv\Scripts\activate
+   # On macOS/Linux:
+   source venv/bin/activate
    ```
 
-3. **Install the dependencies**:
+3. **Install dependencies**:
 
    ```bash
    pip install -r requirements.txt
    ```
 
 4. **Run the application**:
+
    ```bash
-   python3 -m app.main
+   python CLOComparisonApp/main.py
    ```
 
 ---
 
 ## Running Tests
 
-Unit tests are included to ensure the correctness of the similarity calculations and CLO extraction logic. To run the tests, use:
+To ensure the correctness of the extraction and comparison logic, run the included tests:
 
 ```bash
-pytest tests/
+pytest CLOComparisonApp/tests/
 ```
-
----
-
-## Docker Setup
-
-To run the application in a containerized environment, build the Docker image and run it:
-
-1. **Build the Docker image**:
-
-   ```bash
-   docker build -t clo-comparison-app .
-   ```
-
-2. **Run the Docker container**:
-   ```bash
-   docker run -p 8080:8080 clo-comparison-app
-   ```
 
 ---
 
 ## Contributing
 
-Contributions are welcome! Please submit a pull request or open an issue to discuss improvements or bug fixes.
+Contributions are welcome! Please feel free to submit a Pull Request or open an issue for any bugs or feature requests.
 
 ---
 
-## Ownership
+## License
 
-This project is owned and developed by Akshun Chauhan. All rights reserved.
+This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
+
+---
+
+## Author
+
+**Akshun Chauhan**
+- GitHub: [@AkshunChauhan](https://github.com/AkshunChauhan)
